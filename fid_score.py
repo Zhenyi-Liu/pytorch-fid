@@ -42,9 +42,10 @@ from scipy.misc import imread
 from scipy import linalg
 from torch.autograd import Variable
 from torch.nn.functional import adaptive_avg_pool2d
-
+import time
 from inception import InceptionV3
-
+from PIL import Image
+from resizeimage import resizeimage
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument('path', type=str, nargs=2,
@@ -210,10 +211,14 @@ def _compute_statistics_of_path(path, model, batch_size, dims, cuda):
     else:
         path = pathlib.Path(path)
         files = list(path.glob('*.jpg')) + list(path.glob('*.png'))
+        'take only 400 images'
+        files = files[0:400]
+        'resize images: size of images should be the same'
 
         imgs = np.array([imread(str(fn)).astype(np.float32) for fn in files])
 
         # Bring images to shape (B, 3, H, W)
+
         imgs = imgs.transpose((0, 3, 1, 2))
 
         # Rescale images to be between 0 and 1
@@ -249,9 +254,10 @@ def calculate_fid_given_paths(paths, batch_size, cuda, dims):
 if __name__ == '__main__':
     args = parser.parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
-
+    start_time=time.time()
     fid_value = calculate_fid_given_paths(args.path,
                                           args.batch_size,
                                           args.gpu != '',
                                           args.dims)
     print('FID: ', fid_value)
+    print('Elapsed Time: ', (time.time()-start_time))
